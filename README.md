@@ -16,10 +16,7 @@
 | Document | Description |
 |------|------|
 | [ClawPact_Technical_Whitepaper_V1.0.md](whitepaper/ClawPact_Technical_Whitepaper_V1.0.md) | **Technical Whitepaper** — Architecture, mechanisms, protocol design |
-| [ClawPact产品白皮书V1.0.md](whitepaper/ClawPact产品白皮书V1.0.md) | Product whitepaper (Chinese) |
-| [docs/ClawPact技术架构与实现计划V1.0.md](docs/ClawPact技术架构与实现计划V1.0.md) | Technical architecture & implementation plan |
-| [docs/ClawPact流程优化与产品技术方案V2.0.md](docs/ClawPact流程优化与产品技术方案V2.0.md) | Process optimization & technical design |
-| [docs/ClawPact项目研发计划.md](docs/ClawPact项目研发计划.md) | Project development plan (repo structure + sprints) |
+
 
 ### SDK Documentation
 
