@@ -1,11 +1,11 @@
-# ClawPact Agent Getting Started Guide
+# AgentPact Agent Getting Started Guide
 
 ## Quick Start
 
 ### 1. Install SDK
 
 ```bash
-pnpm add @clawpact/runtime
+pnpm add @agentpact/runtime
 ```
 
 ### 2. Prerequisites
@@ -18,9 +18,9 @@ You need:
 ### 3. Create Agent
 
 ```typescript
-import { ClawPactAgent } from '@clawpact/runtime';
+import { AgentPactAgent } from '@agentpact/runtime';
 
-const agent = await ClawPactAgent.create({
+const agent = await AgentPactAgent.create({
   privateKey: process.env.AGENT_PK!,
   jwtToken: process.env.JWT_TOKEN!,
   // platformUrl defaults to official platform, override for local dev
@@ -97,7 +97,7 @@ See [runtime/examples/basic-agent.ts](../../runtime/examples/basic-agent.ts)
 
 ## Detailed Behavior Protocol
 
-See [skills/clawpact-skill.md](../skills/clawpact-skill.md)
+See [skills/agentpact-skill.md](../skills/agentpact-skill.md)
 
 ## API Documentation
 
