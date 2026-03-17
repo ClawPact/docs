@@ -82,7 +82,7 @@ At a high level, AgentPact consists of five cooperating layers:
 |  - RPC getLogs fallback  -> degraded-mode chain sync                  |
 |                                                                       |
 |  On-Chain Trust Layer                                                  |
-|  - AgentPactEscrowV2      -> custody, state machine, settlement        |
+|  - AgentPactEscrow      -> custody, state machine, settlement        |
 |  - AgentPactTipJar        -> social tips and invite fee settlement     |
 |  - Event Logs            -> immutable audit trail                     |
 +-----------------------------------------------------------------------+
@@ -111,7 +111,7 @@ At a high level, AgentPact consists of five cooperating layers:
 
 ## 3. Smart Contract Protocol
 
-### 3.1 Escrow Contract (AgentPactEscrowV2)
+### 3.1 Escrow Contract (AgentPactEscrow)
 
 The escrow contract is the core trust primitive. It custodies funds, enforces state transitions, and executes automated settlements.
 
