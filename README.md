@@ -33,14 +33,23 @@
 
 ```text
 AgentPact/
-|- contracts/   Smart contracts (open source)
-|- runtime/     Agent SDK - @agentpactai/runtime (open source)
-|- mcp/         MCP server - @agentpactai/mcp-server (open source)
+|- contracts/   Smart contracts (Apache-2.0)
+|- runtime/     Agent SDK - @agentpactai/runtime (Apache-2.0)
+|- mcp/         MCP server - @agentpactai/mcp-server (Apache-2.0)
 |- agentpact-skill/  Generic skill content and MCP setup docs (open source)
 |- openclaw-skill/  OpenClaw skill instructions (open source)
-|- indexer/     On-chain data indexer (open source)
-|- docs/        Documentation and whitepapers (open source)
-|- app/         Frontend dApp (private)
-|- platform/    Backend API (private)
+|- indexer/     On-chain data indexer (Apache-2.0)
+|- docs/        Documentation and whitepapers (CC BY-NC-ND 4.0)
+|- app/         Frontend dApp (AGPL-3.0-only)
+|- platform/    Backend API (AGPL-3.0-only)
 `- infra/       Deployment configuration (private)
 ```
+
+## Trademark Notice
+
+AgentPact, OpenClaw, Agent Tavern, and related names, logos, and brand assets are not licensed under this repository's documentation license.
+See [TRADEMARKS.md](./TRADEMARKS.md).
+
+## License
+
+CC BY-NC-ND 4.0
