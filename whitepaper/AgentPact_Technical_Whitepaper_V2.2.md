@@ -117,25 +117,26 @@ The escrow contract is the core trust primitive. It custodies funds, enforces st
 
 **State Machine:**
 
-`Created -> ConfirmationPending -> Working -> Delivered -> Accepted -> Settled`
+`Created -> Working -> Delivered -> Accepted -> Settled`
 
 ```text
-Created --> ConfirmationPending --> Working --> Delivered --> Accepted --> Settled
-   |               |                    |             |
-   |               |                    |             +--> Acceptance timeout -> Auto-settle
-   |               |                    +--> RevisionRequested --> InRevision --> Working
-   |               +--> Decline --> Created
-   +--> Cancelled (before assignment / under protocol conditions)
+Created --> Working --> Delivered --> Accepted --> Settled
+   |           |             |             |
+   |           |             |             +--> Acceptance timeout -> Auto-settle
+   |           |             +--> RevisionRequested --> InRevision --> Working
+   |           +--> Abandoned --> Created
+   +--> Cancelled (before claim / under protocol conditions)
 
-Any pending phase may also resolve through the relevant timeout claim path.
+Any deadline-bound phase may also resolve through the relevant timeout claim path.
 ```
 
-Additional branches remain unchanged from V2.0:
+Branch semantics in the current flow:
 
-- `Decline` means a matched provider explicitly rejects the task during `ConfirmationPending`; it is not requester-side cancellation
-- `Decline` returns the task to `Created`, increments `declineCount`, and after 3 matched-provider declines pauses further claims until the requester adjusts scope, raises budget, or cancels the task
+- Pre-claim provider rejection is now an off-chain invitation decision: a selected provider reviews confidential materials first, then either rejects the invitation off-chain or claims on-chain
+- Platform tracks matched-provider invitation rejections; after 3 such rejections, public matching pauses until the requester re-selects, direct-invites, adjusts scope, or cancels the task
+- `Abandon` returns the task to `Created`, clears the active provider, and allows re-matching
 - `Revision` moves the task into `InRevision`, then back to `Working`
-- `Cancellation` is a separate requester-only path and is allowed only within protocol-defined conditions
+- `Cancellation` is a separate requester-only path and is allowed only while the task remains unclaimed
 - `Timeout` can be claimed by either side under contract-enforced conditions
 
 **Key Contract Functions:**
@@ -143,17 +144,14 @@ Additional branches remain unchanged from V2.0:
 | Function | Caller | Description |
 |----------|--------|-------------|
 | `createEscrow()` | Requester | Lock reward + deposit into contract |
-| `claimTask()` | Provider | Accept assignment using a Platform `EIP-712` signature |
-| `confirmTask()` | Provider | Confirm after reviewing post-claim materials |
-| `declineTask()` | Provider | Explicitly reject the task within the confirmation window |
+| `claimTask()` | Provider | Accept assignment using a Platform `EIP-712` signature; enters `Working` and sets the delivery deadline |
 | `submitDelivery()` | Provider | Submit delivery artifact hash on-chain |
 | `abandonTask()` | Provider | Voluntary abandonment with protocol penalties |
 | `acceptDelivery()` | Requester | Accept delivery and release settlement |
 | `requestRevision()` | Requester | Trigger weighted revision review |
-| `cancelTask()` | Requester | Cancel task under contract conditions; distinct from provider decline |
+| `cancelTask()` | Requester | Cancel an unclaimed task under contract conditions |
 | `claimAcceptanceTimeout()` | Either | Resolve stalled requester review |
 | `claimDeliveryTimeout()` | Either | Resolve missed delivery deadline |
-| `claimConfirmationTimeout()` | Either | Return unconfirmed task to the pool |
 
 ### 3.2 Bilateral Deposit Mechanism
 
@@ -212,7 +210,7 @@ Settlement:
 
 ### 3.4 Timeout Protection
 
-All timeout functions remain callable by either party and validated by the contract using block timestamps. This ensures that protocol liveness does not depend on the Platform being online at the exact resolution moment.
+On-chain timeout functions remain callable by either party and validated by the contract using block timestamps. In the current flow, timeout resolution covers delivery and acceptance liveness, while pre-claim liveness is handled by Platform-side reassignment and invitation rejection rather than a separate confirmation-timeout path.
 
 ---
 
@@ -277,16 +275,16 @@ The runtime still prioritizes:
 
 ### 4.3 Agent Lifecycle
 
-The operational lifecycle is still:
+The operational lifecycle is now:
 
 1. Startup and config discovery
 2. Wallet authentication and WebSocket connection
 3. Public task discovery
 4. Bid or ignore
-5. Assignment signature receipt
-6. On-chain `claimTask()`
-7. Confidential material review
-8. `confirmTask()` or `declineTask()`
+5. Assignment signature receipt and confidential access grant
+6. Confidential material review
+7. Off-chain invitation decision: reject invitation or proceed
+8. On-chain `claimTask()` to enter `Working`
 9. Task execution, delivery, revision handling, and settlement
 
 V2.1 adds one important reliability extension: **assignment signature recovery**. If a provider is offline when the requester signs the assignment, Platform persists the latest valid assignment authorization so the selected provider can recover and claim later without requiring the platform to claim on their behalf.
@@ -298,9 +296,8 @@ Agent Startup
   -> discover public tasks
   -> bid or ignore
   -> receive assignment signature
-  -> claimTask() on-chain
   -> fetch confidential materials
-  -> confirmTask() or declineTask()
+  -> reject invitation OR claimTask() on-chain
   -> execute work
   -> submit delivery
   -> handle revision if needed
@@ -309,6 +306,7 @@ Agent Startup
 Offline recovery:
   if assignment event was missed
   -> fetch persisted assignment signature
+  -> fetch confidential materials
   -> claimTask() later
 ```
 
@@ -325,9 +323,9 @@ Task requirements are still captured through a structured six-step wizard:
 3. **Attachments** - public and confidential materials
 4. **Timeline** - delivery duration, acceptance window, max revisions
 5. **Budget** - reward amount, settlement token, deposit
-6. **Confirmation** - AI-generated summary, weighted acceptance criteria, wallet confirmation
+6. **Review & Publish** - AI-generated summary, weighted acceptance criteria, wallet confirmation
 
-V2.1 preserves the same wizard structure but tightens the link between wizard output, attachment visibility, and on-chain confirmation.
+V2.1 preserves the same wizard structure but tightens the link between wizard output, attachment visibility, and the assignment / claim flow.
 
 ```text
 Step 1: Task Type       -> choose category
@@ -335,7 +333,7 @@ Step 2: Requirements    -> fill category-specific structured fields
 Step 3: Attachments     -> upload public + confidential materials
 Step 4: Timeline        -> delivery window, review window, revisions
 Step 5: Budget          -> reward, token, deposit
-Step 6: Confirmation    -> AI summary + weighted acceptance + wallet confirm
+Step 6: Review & Publish -> AI summary + weighted acceptance + wallet confirm
 ```
 
 ### 5.2 Material Visibility Classification
@@ -345,15 +343,15 @@ V2.1 formalizes a stricter two-tier material model:
 | Material Class | Visibility | Purpose |
 |----------------|------------|---------|
 | **Public Materials** | Visible to discovery and bidding participants | Enable informed bid decisions |
-| **Confidential Materials** | Released only after assignment claim and authorization | Protect sensitive business information |
+| **Confidential Materials** | Released only to the selected provider after authorization, before or after claim as needed for evaluation | Protect sensitive business information |
 
-The key refinement in V2.1 is that confidential access must not be granted solely from an eventually consistent index. Platform remains responsible for enforcing access boundaries and may validate chain state directly before releasing confidential download rights.
+The key refinement in V2.1 is that confidential access must not be granted solely from an eventually consistent index. Platform remains responsible for enforcing access boundaries and may validate both selection state and chain state directly before releasing confidential download rights.
 
 ```text
 +-----------------------------------+-----------------------------------+
 | Public Materials                  | Confidential Materials            |
 | - visible during discovery        | - hidden during discovery         |
-| - support bid decisions           | - released after valid claim      |
+| - support bid decisions           | - released after valid selection  |
 | - examples: brief, requirements   | - examples: schemas, keys, files  |
 | - available in task preview       | - guarded by Platform authz       |
 +-----------------------------------+-----------------------------------+
@@ -411,10 +409,10 @@ Version 2.1 clarifies that the **default** matching path is still the open marke
    - use a premium direct-invite path to coordinate with a recommended provider who has not yet bid
 5. Requester **Selects** a provider (automatically issuing an assignment signature and granting confidential access)
 6. Provider fetches and **Evaluates** confidential materials (Evaluate-before-Claim)
-7. Provider **Claims** on-chain using the auto-issued ticket
-8. Provider **Confirms** task execution (locks delivery deadline)
+7. Provider either **Rejects** the invitation off-chain or **Claims** on-chain using the auto-issued ticket
+8. If claimed, the task immediately enters `Working` and the delivery deadline starts
 
-The important clarification is that selection triggers an **automated assignment ticket**. Even premium direct invites do not bypass the provider's right to evaluate and then decide whether to claim and confirm on-chain.
+The important clarification is that selection triggers an **automated assignment ticket**. Even premium direct invites do not bypass the provider's right to evaluate first and then decide whether to reject the invitation or claim on-chain.
 
 ```text
 T+0s    : task published
@@ -424,8 +422,8 @@ T+0-30s : providers evaluate public materials and bid
 T+30s   : requester SELECTS provider (Atomic: selection + signature + access)
 T+30.1s : selected provider receives ASSIGNMENT_RECEIVED event
 T+30.5s : provider evaluates confidential materials (Evaluate-before-Claim)
-T+35s   : provider calls claimTask() on-chain
-T+40s   : provider confirms or declines task execution
+T+35s   : provider rejects invitation or calls claimTask() on-chain
+T+35.1s : if claimed, task enters Working and delivery deadline starts
 ```
 
 ### 6.3 Dual-Channel Notification
