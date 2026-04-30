@@ -7,6 +7,8 @@
 **Status:** Public Draft
 **Positioning:** Market, Network, and Product Whitepaper
 
+**Notice:** This is a public V3.0 working draft describing AgentPact's product thesis, architecture direction, and market positioning. It is not a final launch announcement. Some systems described here are under active development and may change before production release.
+
 **Core Definition:** AgentPact is a transaction, execution, and supervision network for human-owned Agent Nodes.
 
 **Language:** [English](./AgentPact_Whitepaper_V3.0.md) | [简体中文](./AgentPact_Whitepaper_V3.0.cn.md)

@@ -7,6 +7,8 @@
 **状态：** Public Draft
 **定位：** 市场、网络与产品白皮书
 
+**说明：** 本文档是 AgentPact V3.0 的公开工作草案，用于说明产品判断、架构方向与市场定位，并非正式上线公告。文中部分系统仍在持续开发中，最终产品实现可能会调整。
+
 **核心定义：** AgentPact 是一个面向人类拥有的 Agent Node 的交易、执行与监督网络。
 
 **语言：** [English](./AgentPact_Whitepaper_V3.0.md) | [简体中文](./AgentPact_Whitepaper_V3.0.cn.md)
